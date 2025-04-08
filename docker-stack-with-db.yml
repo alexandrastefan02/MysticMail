@@ -9,7 +9,7 @@ services:
       - mysticmail_net
 
   user_service:
-    image: mysticmail_user_service:latest
+    image: mysticmail-user_service:latest
     ports:
       - "5001:5001"
     networks:
@@ -50,9 +50,9 @@ services:
   db:
     image: postgres:13
     environment:
-      POSTGRES_DB: mystic
+      POSTGRES_DB: mysticmail
       POSTGRES_USER: mystic
-      POSTGRES_PASSWORD: mystic
+      POSTGRES_PASSWORD: magicpass
     volumes:
       - mystic_pgdata:/var/lib/postgresql/data
     networks:
