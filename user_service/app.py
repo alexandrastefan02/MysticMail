@@ -1,10 +1,21 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from auth import register_user, authenticate_user
+from flask_sqlalchemy import SQLAlchemy
+from models import db, User
+import hashlib
 
 app = Flask(__name__)
-CORS(app)  # 🧙‍♀️ linia magică!
+CORS(app)
 
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://mystic:magicpass@db:5432/mysticmail'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db.init_app(app)
+
+with app.app_context():
+    db.create_all()
+
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
 
 @app.route("/", methods=["GET"])
 def home():
@@ -13,20 +24,22 @@ def home():
 @app.route("/register", methods=["POST"])
 def register():
     data = request.get_json()
-    if not data or "username" not in data or "password" not in data:
-        return jsonify({"error": "Username and password required"}), 400
-    username = data["username"]
-    password = data["password"]
-    return register_user(username, password)
+    if User.query.filter_by(username=data['username']).first():
+        return jsonify({"error": "User already exists"}), 400
+    user = User(username=data['username'], password_hash=hash_password(data['password']))
+    db.session.add(user)
+    db.session.commit()
+    return jsonify({"message": "User registered successfully!"}), 201
 
 @app.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
-    if not data or "username" not in data or "password" not in data:
-        return jsonify({"error": "Username and password required"}), 400
-    username = data["username"]
-    password = data["password"]
-    return authenticate_user(username, password)
+    user = User.query.filter_by(username=data['username']).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    if user.password_hash != hash_password(data['password']):
+        return jsonify({"error": "Incorrect password"}), 401
+    return jsonify({"message": "Login successful!"}), 200
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)

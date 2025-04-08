@@ -1,124 +1,84 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os
-import json
-from auth import register_user, authenticate_user
+from flask_sqlalchemy import SQLAlchemy
+from models import db, Message
 import random
 
+# ✨ Note magice pentru livrare
 SENT_NOTES = [
     "✨ Message sent by fate!",
     "💫 Carried by cosmic winds.",
     "🪐 Launched through the void.",
     "🌙 Whispered to the stars.",
-    "🔮 Channeled through mystic forces.",
-    "📡 Beamed to alternate dimensions.",
-    "📜 Written in ancient runes.",
-    "🐉 Delivered by dragon post.",
-    "🧚‍♀️ Sprinkled with stardust.",
-    "⚡ Struck by divine lightning.",
-    "💌 A love letter from the beyond.",
-    "🧙‍♂️ Cast with arcane magic.",
-    "🌈 Found at the end of a rainbow.",
-    "🍄 Grown from fungal thoughts.",
-    "🌪️ Sent via elemental whirlwind.",
-    "🕊️ Flown by celestial pigeon.",
-    "🎠 Riding the dream carousel.",
-    "🚀 Blasted from a glitter rocket."
 ]
 
 UNSEND_NOTES = [
     "🌫️ Message lost in the mists...",
     "💨 Whisked away by the wind.",
-    "👻 Disappeared into thin air.",
     "❌ Canceled by fate.",
-    "💥 Exploded into stardust.",
-    "🧿 Hexed out of existence.",
-    "⏳ Lost in time.",
-    "💔 Broken by cosmic forces.",
-    "🔒 Sealed away forever.",
-    "🚫 Blocked by the universe."
+    "👻 Disappeared into thin air.",
 ]
 
-
 app = Flask(__name__)
-CORS(app)  # 🧙‍♀️ linia magică!
+CORS(app)
 
-DATA_FILE = "messages.json"
+# Configurare PostgreSQL
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://mystic:magicpass@db:5432/mysticmail'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db.init_app(app)
+
+# Creăm tabelele dacă nu există
+with app.app_context():
+    db.create_all()
+
 @app.route("/", methods=["GET"])
 def home():
-    return "<h2>Welcome to MysticMail User Service 🧙‍♀️</h2>"
-
-@app.route("/register", methods=["POST"])
-def register():
-    data = request.get_json()
-    if not data or "username" not in data or "password" not in data:
-        return jsonify({"error": "Username and password required"}), 400
-    username = data["username"]
-    password = data["password"]
-    return register_user(username, password)
-
-@app.route("/login", methods=["POST"])
-def login():
-    data = request.get_json()
-    if not data or "username" not in data or "password" not in data:
-        return jsonify({"error": "Username and password required"}), 400
-    username = data["username"]
-    password = data["password"]
-    return authenticate_user(username, password)
+    return "<h2>Welcome to MysticMail Message Service 🌌</h2>"
 
 @app.route("/send_message", methods=["POST"])
 def send_message():
-    data = request.json
+    data = request.get_json()
+    probability = float(data.get("probability", 1.0))
 
-    # Get data from request, set defaults
-    probability = data.get("probability", 1)
-    send_status = "sent" if random.random() < probability else "not sent"
+    sent = random.random() < probability
+    status = "sent" if sent else "not sent"
+    note = random.choice(SENT_NOTES if sent else UNSEND_NOTES)
 
-    # Select note based on whether the message is sent or not
-    if send_status == "sent":
-        note = random.choice(SENT_NOTES)
-    else:
-        note = random.choice(UNSEND_NOTES)
+    msg = Message(
+        sender=data.get("sender"),
+        receiver=data.get("receiver"),
+        message=data.get("message"),
+        probability=probability,
+        status=status,
+        note=note
+    )
 
-    new_message = {
-        "from": data.get("from", "mystic"),
-        "to": data.get("to", ""),
-        "message": data.get("message", ""),
-        "probability": probability,
-        "note": note,
-        "status": send_status
-    }
+    db.session.add(msg)
+    db.session.commit()
 
-    # Read messages.json or create a new list
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, 'r') as f:
-            try:
-                messages = json.load(f)
-            except json.JSONDecodeError:
-                messages = []
-    else:
-        messages = []
-
-    # Append new message and save
-    messages.append(new_message)
-    with open(DATA_FILE, 'w') as f:
-        json.dump(messages, f)
-
-    return jsonify(new_message)
-
+    return jsonify({
+        "message": msg.message,
+        "from": msg.sender,
+        "to": msg.receiver,
+        "probability": msg.probability,
+        "status": msg.status,
+        "note": msg.note
+    })
 
 @app.route("/get_messages", methods=["GET"])
 def get_messages():
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, 'r') as f:
-            try:
-                messages = json.load(f)
-            except json.JSONDecodeError:
-                messages = []
-    else:
-        messages = []
-    return jsonify(messages)
-
+    messages = Message.query.all()
+    return jsonify([
+        {
+            "from": m.sender,
+            "to": m.receiver,
+            "message": m.message,
+            "probability": m.probability,
+            "status": m.status,
+            "note": m.note
+        }
+        for m in messages
+    ])
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
