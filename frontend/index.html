@@ -188,8 +188,8 @@ async function sendMessage() {
     ✨ Your message <strong>#${data.message_id}</strong> was 
     <span style="color: ${data.status === "sent" ? "#00ffcc" : "#ff8888"};">
       ${data.status}
-    </span>! 
-    ${data.status === "sent" ? "🕊️ It's on its magical way!" : "💫 It vanished into the mystical ether..."}
+    </span>!<br/>
+    <em style="display: block; margin-top: 8px; color: #ffc0ff;">${data.note}</em>
   </div>
 `;
 
