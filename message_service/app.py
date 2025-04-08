@@ -3,7 +3,7 @@ from flask_cors import CORS
 from models import db, Message
 import random
 
-
+import requests
 
 app = Flask(__name__)
 CORS(app)
@@ -56,6 +56,16 @@ with app.app_context():
 def home():
     return "<h2>✨ MysticMail Message Service is running!</h2>"
 
+def notify_user_email(receiver, content):
+    try:
+        requests.post("http://notification_service:5002/notify", json={
+            "receiver": receiver,
+            "message": content
+        })
+        print(f"📬 Notificare: Trimit email către {receiver}")
+    except Exception as e:
+        print(f"❌ Eroare trimitere notificare: {e}")
+        
 @app.route("/send_message", methods=["POST"])
 def send_message():
     data = request.json
@@ -79,6 +89,8 @@ def send_message():
     )
     db.session.add(new_msg)
     db.session.commit()
+    if new_msg.status == "sent":
+        notify_user_email(new_msg.receiver, new_msg.message)
 
     return jsonify({
         "status": new_msg.status,
@@ -99,6 +111,8 @@ def get_messages():
             "note": msg.note
         } for msg in messages
     ])
+    
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5005)

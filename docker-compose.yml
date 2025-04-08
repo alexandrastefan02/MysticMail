@@ -6,18 +6,36 @@ services:
     ports:
       - "5005:5005"
     container_name: message_service
+    depends_on:
+      - user_service
+      - db
+      - notification_service
 
   user_service:
     build: ./user_service
     ports:
       - "5001:5001"
     container_name: user_service
+    depends_on:
+      - db
+
+  notification_service:
+    build: ./notification_service
+    ports:
+      - "5002:5002"
+    container_name: notification_service
+    environment:
+      - BREVO_API_KEY=xkeysib-PASTE-YOUR-KEY-HERE
+      - BREVO_SENDER=alexandrastefan911@gmail.com@gmail.com
 
   frontend:
     build: ./frontend
     ports:
       - "8080:80"
     container_name: frontend
+    depends_on:
+      - message_service
+      - user_service
 
   db:
     image: postgres
@@ -35,5 +53,6 @@ services:
     restart: always
     ports:
       - "8081:8080"
+
 volumes:
   dbdata:
