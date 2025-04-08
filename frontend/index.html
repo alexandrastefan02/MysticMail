@@ -125,7 +125,7 @@
 
   <script>
     const userService = "http://localhost:5001";
-    const msgService = "http://localhost:5000";
+    const msgService = "http://localhost:5005";
 
     async function register() {
         const res = await fetch(`${userService}/register`, {
@@ -183,7 +183,16 @@ async function sendMessage() {
     })
   });
   const data = await res.json();
-  document.getElementById("msgResult").innerText = JSON.stringify(data);
+  document.getElementById("msgResult").innerHTML = `
+  <div style="margin-top: 10px; padding: 10px; border: 1px dashed #ffb7f0; background: rgba(255,255,255,0.05); border-radius: 12px;">
+    ✨ Your message <strong>#${data.message_id}</strong> was 
+    <span style="color: ${data.status === "sent" ? "#00ffcc" : "#ff8888"};">
+      ${data.status}
+    </span>! 
+    ${data.status === "sent" ? "🕊️ It's on its magical way!" : "💫 It vanished into the mystical ether..."}
+  </div>
+`;
+
 }
 
 async function viewMessages() {

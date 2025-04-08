@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
+from models import db, Message
 import os
 import json
 import random
@@ -47,76 +48,51 @@ app = Flask(__name__)
 metrics = PrometheusMetrics(app)
 CORS(app)
 
+# Conectare la baza de date mistica 🧙‍♀️
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://mystic:magicpass@db:5432/mysticmail"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-DATA_FILE = "messages.json"
+db.init_app(app)
+
+# Creează tabelele dacă nu există
+with app.app_context():
+    db.create_all()
+    print("✅ Tabelele au fost create sau există deja.")
 
 @app.route("/", methods=["GET"])
 def home():
-    return "<h2>Welcome to MysticMail Message Service 🚀</h2>"
-
-@app.route("/register", methods=["POST"])
-def register():
-    data = request.get_json()
-    if not data or "username" not in data or "password" not in data:
-        return jsonify({"error": "Username and password required"}), 400
-    return register_user(data["username"], data["password"])
-
-@app.route("/login", methods=["POST"])
-def login():
-    data = request.get_json()
-    if not data or "username" not in data or "password" not in data:
-        return jsonify({"error": "Username and password required"}), 400
-    return authenticate_user(data["username"], data["password"])
+    return "<h2>✨ MysticMail Message Service is running!</h2>"
 
 @app.route("/send_message", methods=["POST"])
 def send_message():
     data = request.json
-    probability = data.get("probability", 1)
-    send_status = "sent" if random.random() < probability else "not sent"
-    note = random.choice(SENT_NOTES if send_status == "sent" else UNSEND_NOTES)
-
-    new_message = {
-        "from": data.get("from", "mystic"),
-        "to": data.get("to", ""),
-        "message": data.get("message", ""),
-        "probability": probability,
-        "note": note,
-        "status": send_status
-    }
-
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, 'r') as f:
-            try:
-                messages = json.load(f)
-            except json.JSONDecodeError:
-                messages = []
-    else:
-        messages = []
-
-    messages.append(new_message)
-    with open(DATA_FILE, 'w') as f:
-        json.dump(messages, f)
-
-    return jsonify(new_message)
+    new_msg = Message(
+        sender=data.get("sender"),
+        receiver=data.get("receiver"),
+        message=data.get("message"),
+        probability=data.get("probability"),
+        status="sent"  # pentru test, se poate adăuga random mai târziu
+    )
+    db.session.add(new_msg)
+    db.session.commit()
+    return jsonify({"status": "sent", "message_id": new_msg.id})
 
 @app.route("/get_messages", methods=["GET"])
 def get_messages():
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, 'r') as f:
-            try:
-                messages = json.load(f)
-            except json.JSONDecodeError:
-                messages = []
-    else:
-        messages = []
-    return jsonify(messages)
+    messages = Message.query.all()
+    return jsonify([
+        {
+            "from": msg.sender,
+            "to": msg.receiver,
+            "message": msg.message,
+            "status": msg.status,
+            "note": msg.note
+        } for msg in messages
+    ])
 
 @app.route("/metrics")
 def metrics_endpoint():
     return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
-
-
-
+    app.run(host="0.0.0.0", port=5005)
