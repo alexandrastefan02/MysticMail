@@ -1,0 +1,25 @@
+# MysticMail - Comenzi de rulare și administrare (Docker Swarm)
+
+## 1. Inițializare Swarm (doar prima dată)
+docker swarm init
+
+## 2. Construirea imaginilor Docker (după modificări în cod)
+docker compose build
+
+## 3. Deploy stack MysticMail în Docker Swarm
+docker stack deploy --compose-file docker-stack.yml mysticmail
+
+## 4. Verificare status servicii
+docker service ls
+
+## 5. Acces aplicație în browser
+http://localhost:8080
+
+## 6. Vizualizare loguri pentru message_service
+docker service logs mysticmail_message_service
+
+## 7. Oprire aplicație complet (ștergere servicii)
+docker stack rm mysticmail
+
+## 8. Dezactivare Docker Swarm (opțional)
+docker swarm leave --force
