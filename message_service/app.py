@@ -1,9 +1,13 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 import os
 import json
-from auth import register_user, authenticate_user
 import random
+
+from auth import register_user, authenticate_user
+
+from prometheus_flask_exporter import PrometheusMetrics
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 SENT_NOTES = [
     "✨ Message sent by fate!",
@@ -39,46 +43,37 @@ UNSEND_NOTES = [
     "🚫 Blocked by the universe."
 ]
 
-
 app = Flask(__name__)
-CORS(app)  # 🧙‍♀️ linia magică!
+metrics = PrometheusMetrics(app)
+CORS(app)
+
 
 DATA_FILE = "messages.json"
+
 @app.route("/", methods=["GET"])
 def home():
-    return "<h2>Welcome to MysticMail User Service 🧙‍♀️</h2>"
+    return "<h2>Welcome to MysticMail Message Service 🚀</h2>"
 
 @app.route("/register", methods=["POST"])
 def register():
     data = request.get_json()
     if not data or "username" not in data or "password" not in data:
         return jsonify({"error": "Username and password required"}), 400
-    username = data["username"]
-    password = data["password"]
-    return register_user(username, password)
+    return register_user(data["username"], data["password"])
 
 @app.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
     if not data or "username" not in data or "password" not in data:
         return jsonify({"error": "Username and password required"}), 400
-    username = data["username"]
-    password = data["password"]
-    return authenticate_user(username, password)
+    return authenticate_user(data["username"], data["password"])
 
 @app.route("/send_message", methods=["POST"])
 def send_message():
     data = request.json
-
-    # Get data from request, set defaults
     probability = data.get("probability", 1)
     send_status = "sent" if random.random() < probability else "not sent"
-
-    # Select note based on whether the message is sent or not
-    if send_status == "sent":
-        note = random.choice(SENT_NOTES)
-    else:
-        note = random.choice(UNSEND_NOTES)
+    note = random.choice(SENT_NOTES if send_status == "sent" else UNSEND_NOTES)
 
     new_message = {
         "from": data.get("from", "mystic"),
@@ -89,7 +84,6 @@ def send_message():
         "status": send_status
     }
 
-    # Read messages.json or create a new list
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, 'r') as f:
             try:
@@ -99,13 +93,11 @@ def send_message():
     else:
         messages = []
 
-    # Append new message and save
     messages.append(new_message)
     with open(DATA_FILE, 'w') as f:
         json.dump(messages, f)
 
     return jsonify(new_message)
-
 
 @app.route("/get_messages", methods=["GET"])
 def get_messages():
@@ -119,6 +111,12 @@ def get_messages():
         messages = []
     return jsonify(messages)
 
+@app.route("/metrics")
+def metrics_endpoint():
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+
+
+
