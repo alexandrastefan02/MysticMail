@@ -1,15 +1,21 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 from models import db, Message
+import os
+import json
 import random
 
+from auth import register_user, authenticate_user
 
+from prometheus_flask_exporter import PrometheusMetrics
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)
 CORS(app)
 
 # Conectare la baza de date mistica 🧙‍♀️
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://mystic:magicpass@db:5432/mysticmail"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://mystic:mystic@db:5432/mystic"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
@@ -18,24 +24,24 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
     SENT_NOTES = [
-    "✨ Message sent by fate!",
-    "💫 Carried by cosmic winds.",
-    "🪐 Launched through the void.",
-    "🌙 Whispered to the stars.",
-    "🔮 Channeled through mystic forces.",
-    "📡 Beamed to alternate dimensions.",
-    "📜 Written in ancient runes.",
-    "🐉 Delivered by dragon post.",
-    "🧚‍♀️ Sprinkled with stardust.",
-    "⚡ Struck by divine lightning.",
-    "💌 A love letter from the beyond.",
-    "🧙‍♂️ Cast with arcane magic.",
-    "🌈 Found at the end of a rainbow.",
-    "🍄 Grown from fungal thoughts.",
-    "🌪️ Sent via elemental whirlwind.",
-    "🕊️ Flown by celestial pigeon.",
-    "🎠 Riding the dream carousel.",
-    "🚀 Blasted from a glitter rocket."
+        "✨ Message sent by fate!",
+        "💫 Carried by cosmic winds.",
+        "🪐 Launched through the void.",
+        "🌙 Whispered to the stars.",
+        "🔮 Channeled through mystic forces.",
+        "📡 Beamed to alternate dimensions.",
+        "📜 Written in ancient runes.",
+        "🐉 Delivered by dragon post.",
+        "🧚‍♀️ Sprinkled with stardust.",
+        "⚡ Struck by divine lightning.",
+        "💌 A love letter from the beyond.",
+        "🧙‍♂️ Cast with arcane magic.",
+        "🌈 Found at the end of a rainbow.",
+        "🍄 Grown from fungal thoughts.",
+        "🌪️ Sent via elemental whirlwind.",
+        "🕊️ Flown by celestial pigeon.",
+        "🎠 Riding the dream carousel.",
+        "🚀 Blasted from a glitter rocket."
     ]
 
     UNSEND_NOTES = [
@@ -86,7 +92,6 @@ def send_message():
         "note": new_msg.note
     })
 
-
 @app.route("/get_messages", methods=["GET"])
 def get_messages():
     messages = Message.query.all()
@@ -99,6 +104,10 @@ def get_messages():
             "note": msg.note
         } for msg in messages
     ])
+
+@app.route("/metrics")
+def metrics_endpoint():
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5005)

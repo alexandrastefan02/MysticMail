@@ -2,12 +2,17 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from models import db, User
+from prometheus_flask_exporter import PrometheusMetrics
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from flask import Response
 import hashlib
 
 app = Flask(__name__)
-CORS(app)
+metrics = PrometheusMetrics(app)
+CORS(app)  # 🧙‍♀️ linia magică!
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://mystic:magicpass@db:5432/mysticmail'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://mystic:mystic@db:5432/mystic'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
@@ -43,3 +48,8 @@ def login():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)
+
+
+@app.route("/metrics")
+def metrics():
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
