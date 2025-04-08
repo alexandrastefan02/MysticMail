@@ -10,3 +10,4 @@ class Message(db.Model):
     probability = db.Column(db.Float)
     status = db.Column(db.String(20))  # "sent" / "not sent"
     note = db.Column(db.Text)
+

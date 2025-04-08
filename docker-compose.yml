@@ -4,7 +4,7 @@ services:
   message_service:
     build: ./message_service
     ports:
-      - "5000:5000"
+      - "5005:5005"
     container_name: message_service
 
   user_service:
@@ -18,3 +18,22 @@ services:
     ports:
       - "8080:80"
     container_name: frontend
+
+  db:
+    image: postgres
+    environment:
+      POSTGRES_USER: mystic
+      POSTGRES_PASSWORD: magicpass
+      POSTGRES_DB: mysticmail
+    ports:
+      - "5432:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "8081:8080"
+volumes:
+  dbdata:
