@@ -1,10 +1,9 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from models import db, User
 from prometheus_flask_exporter import PrometheusMetrics
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
-from flask import Response
 import hashlib
 
 app = Flask(__name__)
@@ -12,18 +11,25 @@ metrics = PrometheusMetrics(app)
 CORS(app)  # 🧙‍♀️ linia magică!
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://mystic:mystic@db:5432/mystic'
-
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
-with app.app_context():
-    db.create_all()
+created_tables = False
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
 @app.route("/", methods=["GET"])
 def home():
+    global created_tables
+    if not created_tables:
+        try:
+            with app.app_context():
+                db.create_all()
+                print("✅ Tables created (or already exist).")
+                created_tables = True
+        except Exception as e:
+            print("❌ Failed to create tables:", e)
     return "<h2>Welcome to MysticMail User Service 🧙‍♀️</h2>"
 
 @app.route("/register", methods=["POST"])
@@ -46,10 +52,9 @@ def login():
         return jsonify({"error": "Incorrect password"}), 401
     return jsonify({"message": "Login successful!"}), 200
 
+@app.route("/metrics")
+def metrics_endpoint():
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)
-
-
-@app.route("/metrics")
-def metrics():
-    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
