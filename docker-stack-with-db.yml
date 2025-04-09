@@ -66,11 +66,73 @@ services:
     networks:
       - mysticmail_net
 
+
+
+  kong-db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: kong
+      POSTGRES_DB: kong
+      POSTGRES_PASSWORD: kong
+    volumes:
+      - kong_db:/var/lib/postgresql/data
+    networks:
+      - mysticmail_net
+
+  kong:
+    image: kong:3.4
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-db
+      KONG_PG_PASSWORD: kong
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+    depends_on:
+      - kong-db
+    ports:
+      - "8000:8000"   # public API gateway
+      - "8001:8001"   # admin API
+    networks:
+      - mysticmail_net
+
+  konga:
+    image: pantsel/konga:latest
+    environment:
+      NODE_ENV: development
+    ports:
+      - "1337:1337"
+    networks:
+      - mysticmail_net
+
+
+  # kong-migrations:
+  #   image: kong:3.4
+  #   command: kong migrations bootstrap
+  #   environment:
+  #     KONG_DATABASE: postgres
+  #     KONG_PG_HOST: kong-db
+  #     KONG_PG_PASSWORD: kong
+  #   depends_on:
+  #     - kong-db
+  #   networks:
+  #     - mysticmail_net
+  #   deploy:
+  #     restart_policy:
+  #       condition: on-failure
+
+
 networks:
   mysticmail_net:
     external: true
+    attachable: true
 
 volumes:
   prometheus_data:
   grafana_data:
   mystic_pgdata:
+  kong_db:
+
+

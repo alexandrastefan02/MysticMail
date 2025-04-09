@@ -1,0 +1,11 @@
+Serviciu	             URL de acces	                        Descriere
+--------------------------------------------------------------------------------
+Konga	              http://localhost:1337	    Interfață web pentru gestionarea Kong
+Kong Admin	        http://localhost:8001	    API pentru configurare Kong
+Kong Proxy	        http://localhost:8000	    Gateway pentru apeluri către servicii
+Frontend	          http://localhost:8080	    Interfață vizuală a aplicației MysticMail
+Adminer	            http://localhost:8081	    Admin DB UI (bază de date PostgreSQL)
+Prometheus	        http://localhost:9090	    Dashboard Prometheus pentru metrici
+Grafana	            http://localhost:3001	    Dashboard personalizat pentru loguri/metrici
+User Service	      http://localhost:5001	    Serviciu REST pentru autentificare
+Message Service	    http://localhost:5000	    Serviciu REST pentru trimitere mesaje
