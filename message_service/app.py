@@ -4,6 +4,7 @@ from models import db, Message
 import os
 import json
 import random
+import time
 
 from auth import register_user, authenticate_user
 
@@ -15,13 +16,15 @@ metrics = PrometheusMetrics(app)
 CORS(app)
 
 # Conectare la baza de date mistica 🧙‍♀️
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://mystic:mystic@db:5432/mystic"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://mystic:magicpass@db:5432/mystic"
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
 
 # Creează tabelele dacă nu există
 with app.app_context():
+    time.sleep(10)  # Așteaptă 10 secunde pentru a te asigura că baza de date este disponibilă
     db.create_all()
     SENT_NOTES = [
         "✨ Message sent by fate!",
