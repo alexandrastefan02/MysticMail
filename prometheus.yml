@@ -4,7 +4,7 @@ global:
 scrape_configs:
   - job_name: 'message_service'
     static_configs:
-      - targets: ['message_service:5000']
+      - targets: ['message_service:5005']
 
   - job_name: 'user_service'
     static_configs:

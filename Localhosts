@@ -8,4 +8,4 @@ Adminer	            http://localhost:8081	    Admin DB UI (bază de date Postgre
 Prometheus	        http://localhost:9090	    Dashboard Prometheus pentru metrici
 Grafana	            http://localhost:3001	    Dashboard personalizat pentru loguri/metrici
 User Service	      http://localhost:5001	    Serviciu REST pentru autentificare
-Message Service	    http://localhost:5000	    Serviciu REST pentru trimitere mesaje
+Message Service	    http://localhost:5005	    Serviciu REST pentru trimitere mesaje

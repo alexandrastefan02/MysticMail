@@ -10,14 +10,14 @@ app = Flask(__name__)
 metrics = PrometheusMetrics(app)
 CORS(app)  # 🧙‍♀️ linia magică!
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://mystic:magicpass@db:5432/mystic"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://mystic:magicpass@db:5432/mysticmail"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
-created_tables = False
-
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
+
+created_tables = False
 
 @app.route("/", methods=["GET"])
 def home():
