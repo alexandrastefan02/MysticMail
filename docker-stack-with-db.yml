@@ -4,7 +4,7 @@ services:
   message_service:
     image: mysticmail-message_service:latest
     ports:
-      - "5000:5000"
+      - "5000:5005"
     networks:
       - mysticmail_net
 

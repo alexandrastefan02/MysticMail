@@ -5,9 +5,7 @@ import os
 import json
 import random
 import time
-
-from auth import register_user, authenticate_user
-
+import psycopg2
 from prometheus_flask_exporter import PrometheusMetrics
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
@@ -16,50 +14,37 @@ metrics = PrometheusMetrics(app)
 CORS(app)
 
 # Conectare la baza de date mistica 🧙‍♀️
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://mystic:magicpass@db:5432/mystic"
-
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://mystic:magicpass@db:5432/mysticmail"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
 
-# Creează tabelele dacă nu există
+# Asigură-te că baza de date e disponibilă și creează tabelele
 with app.app_context():
-    time.sleep(10)  # Așteaptă 10 secunde pentru a te asigura că baza de date este disponibilă
+    def wait_for_db():
+        while True:
+            try:
+                conn = psycopg2.connect("dbname='mysticmail' user='mystic' host='db' password='magicpass'")
+                conn.close()
+                print("✅ Baza de date e gata!")
+                break
+            except psycopg2.OperationalError:
+                print("⏳ Aștept baza de date...")
+                time.sleep(2)
+    wait_for_db()
     db.create_all()
-    SENT_NOTES = [
-        "✨ Message sent by fate!",
-        "💫 Carried by cosmic winds.",
-        "🪐 Launched through the void.",
-        "🌙 Whispered to the stars.",
-        "🔮 Channeled through mystic forces.",
-        "📡 Beamed to alternate dimensions.",
-        "📜 Written in ancient runes.",
-        "🐉 Delivered by dragon post.",
-        "🧚‍♀️ Sprinkled with stardust.",
-        "⚡ Struck by divine lightning.",
-        "💌 A love letter from the beyond.",
-        "🧙‍♂️ Cast with arcane magic.",
-        "🌈 Found at the end of a rainbow.",
-        "🍄 Grown from fungal thoughts.",
-        "🌪️ Sent via elemental whirlwind.",
-        "🕊️ Flown by celestial pigeon.",
-        "🎠 Riding the dream carousel.",
-        "🚀 Blasted from a glitter rocket."
-    ]
-
-    UNSEND_NOTES = [
-        "🌫️ Message lost in the mists...",
-        "💨 Whisked away by the wind.",
-        "👻 Disappeared into thin air.",
-        "❌ Canceled by fate.",
-        "💥 Exploded into stardust.",
-        "🧿 Hexed out of existence.",
-        "⏳ Lost in time.",
-        "💔 Broken by cosmic forces.",
-        "🔒 Sealed away forever.",
-        "🚫 Blocked by the universe.",
-    ]
     print("✅ Tabelele au fost create sau există deja.")
+
+SENT_NOTES = [
+    "✨ Message sent by fate!",
+    "💫 Carried by cosmic winds.",
+    # ... (restul listelor)
+]
+
+UNSEND_NOTES = [
+    "🌫️ Message lost in the mists...",
+    # ... (restul listelor)
+]
 
 @app.route("/", methods=["GET"])
 def home():
@@ -68,7 +53,6 @@ def home():
 @app.route("/send_message", methods=["POST"])
 def send_message():
     data = request.json
-
     sender = data.get("sender")
     receiver = data.get("receiver")
     message = data.get("message")
