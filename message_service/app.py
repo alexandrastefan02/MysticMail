@@ -8,7 +8,7 @@ import time
 import psycopg2
 from prometheus_flask_exporter import PrometheusMetrics
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
-
+from mailgun_client import send_simple_message
 app = Flask(__name__)
 metrics = PrometheusMetrics(app)
 CORS(app)
@@ -57,11 +57,11 @@ def send_message():
     receiver = data.get("receiver")
     message = data.get("message")
     probability = data.get("probability", 0.5)
-
     was_sent = random.random() < probability
     status = "sent" if was_sent else "missed"
     note = random.choice(SENT_NOTES if was_sent else UNSEND_NOTES)
-
+    if was_sent:
+        resp = send_simple_message(receiver, message)
     new_msg = Message(
         sender=sender,
         receiver=receiver,
