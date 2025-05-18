@@ -9,7 +9,6 @@ import requests
 import psycopg2
 from prometheus_flask_exporter import PrometheusMetrics
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
-from mailgun_client import send_simple_message
 app = Flask(__name__)
 metrics = PrometheusMetrics(app)
 CORS(app)
