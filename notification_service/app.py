@@ -1,8 +1,11 @@
 import os
 import requests
-from flask import Flask, request, jsonify
-
+from flask import Flask, request, jsonify, Response
+from prometheus_flask_exporter import PrometheusMetrics
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)
+
 
 def _read_secret(path):
     try:
@@ -11,7 +14,6 @@ def _read_secret(path):
     except OSError:
         return None
 
-# First, try ENV; if not set, fall back to Docker Secret file
 MAILGUN_API_KEY = (
     os.getenv("MAILGUN_API_KEY")
     or _read_secret(os.getenv("MAILGUN_API_KEY_FILE", "/run/secrets/mailgun_api_key"))
@@ -56,6 +58,7 @@ def send_email():
     response = send_simple_message(recv, message)
 
     if response.status_code == 200:
+        email_sent_counter.inc()
         return jsonify({"status": "sent"}), 200
     else:
         return jsonify({
@@ -63,6 +66,10 @@ def send_email():
             "code": response.status_code,
             "text": response.text
         }), 500
+        
+@app.route("/metrics")
+def metrics_endpoint():
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
 if __name__ == "__main__":
     print("⚡ Starting Flask on 0.0.0.0:5010")
