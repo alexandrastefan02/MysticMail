@@ -1,0 +1,7 @@
+flask
+flask-cors
+prometheus-flask-exporter
+flask_sqlalchemy
+psycopg2-binary
+flask-cors
+requests
