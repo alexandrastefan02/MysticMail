@@ -74,6 +74,7 @@ def send_message():
     db.session.commit()
 
     return jsonify({
+        "mess": "Message sent successfully!",
         "status": new_msg.status,
         "message_id": new_msg.id,
         "note": new_msg.note

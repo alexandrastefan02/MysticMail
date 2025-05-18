@@ -7,6 +7,19 @@ services:
       - "5005:5005"
     networks:
       - mysticmail_net
+    secrets:
+      - mailgun_api_key
+      - mailgun_domain
+    environment:
+      # variabilele vor fi disponibile sub forma fișierelor:
+      MAILGUN_API_KEY_FILE: /run/secrets/mailgun_api_key
+      MAILGUN_DOMAIN_FILE:  /run/secrets/mailgun_domain
+
+secrets:
+  mailgun_api_key:
+    external: true
+  mailgun_domain:
+    external: true
 
   user_service:
     image: mysticmail-user_service:latest
