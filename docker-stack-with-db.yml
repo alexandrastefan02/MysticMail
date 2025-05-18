@@ -1,4 +1,8 @@
-version: "3.8"
+secrets:
+  mailgun_api_key:
+    external: true
+  mailgun_domain:
+    external: true
 
 services:
   message_service:
@@ -11,15 +15,21 @@ services:
       - mailgun_api_key
       - mailgun_domain
     environment:
-      # variabilele vor fi disponibile sub forma fișierelor:
       MAILGUN_API_KEY_FILE: /run/secrets/mailgun_api_key
       MAILGUN_DOMAIN_FILE:  /run/secrets/mailgun_domain
 
-secrets:
-  mailgun_api_key:
-    external: true
-  mailgun_domain:
-    external: true
+  notification_service:
+    image: mysticmail-notification_service:latest
+    secrets:
+      - mailgun_api_key
+      - mailgun_domain
+    ports:
+      - "5006:5006"
+    networks:
+      - mysticmail_net
+    environment:
+      MAILGUN_API_KEY_FILE: /run/secrets/mailgun_api_key
+      MAILGUN_DOMAIN_FILE:  /run/secrets/mailgun_domain
 
   user_service:
     image: mysticmail-user_service:latest
@@ -79,8 +89,6 @@ secrets:
     networks:
       - mysticmail_net
 
-
-
   kong-db:
     image: postgres:13
     environment:
@@ -106,8 +114,8 @@ secrets:
     depends_on:
       - kong-db
     ports:
-      - "8000:8000"   # public API gateway
-      - "8001:8001"   # admin API
+      - "8000:8000"
+      - "8001:8001"
     networks:
       - mysticmail_net
 
@@ -120,23 +128,6 @@ secrets:
     networks:
       - mysticmail_net
 
-
-  # kong-migrations:
-  #   image: kong:3.4
-  #   command: kong migrations bootstrap
-  #   environment:
-  #     KONG_DATABASE: postgres
-  #     KONG_PG_HOST: kong-db
-  #     KONG_PG_PASSWORD: kong
-  #   depends_on:
-  #     - kong-db
-  #   networks:
-  #     - mysticmail_net
-  #   deploy:
-  #     restart_policy:
-  #       condition: on-failure
-
-
 networks:
   mysticmail_net:
     external: true
@@ -147,5 +138,3 @@ volumes:
   grafana_data:
   mystic_pgdata:
   kong_db:
-
-

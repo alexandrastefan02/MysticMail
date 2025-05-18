@@ -5,6 +5,7 @@ import os
 import json
 import random
 import time
+import requests
 import psycopg2
 from prometheus_flask_exporter import PrometheusMetrics
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
@@ -61,7 +62,11 @@ def send_message():
     status = "sent" if was_sent else "missed"
     note = random.choice(SENT_NOTES if was_sent else UNSEND_NOTES)
     if was_sent:
-        resp = send_simple_message(receiver, message)
+        # resp = send_simple_message(receiver, message)
+        response = requests.post("http://notification_service:5010/send_email", json={
+            "to": receiver,
+            "message": message
+        })
     new_msg = Message(
         sender=sender,
         receiver=receiver,
